@@ -361,12 +361,12 @@ fn get_or_insert() {
     s.insert(2);
 
     assert_eq!(*s.get(&4).unwrap(), 4);
-    assert_eq!(*s.insert(4), 4);
+    assert_eq!(*s.insert(4).0, 4);
     assert_eq!(*s.get(&4).unwrap(), 4);
 
-    assert_eq!(*s.get_or_insert(4), 4);
+    assert_eq!(*s.get_or_insert(4).0, 4);
     assert_eq!(*s.get(&4).unwrap(), 4);
-    assert_eq!(*s.get_or_insert(6), 6);
+    assert_eq!(*s.get_or_insert(6).0, 6);
 }
 
 #[test]

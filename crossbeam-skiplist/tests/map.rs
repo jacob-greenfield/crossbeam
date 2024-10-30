@@ -512,12 +512,12 @@ fn get_or_insert() {
     s.insert(2, 2);
 
     assert_eq!(*s.get(&4).unwrap().value(), 4);
-    assert_eq!(*s.insert(4, 40).value(), 40);
+    assert_eq!(*s.insert(4, 40).0.value(), 40);
     assert_eq!(*s.get(&4).unwrap().value(), 40);
 
-    assert_eq!(*s.get_or_insert(4, 400).value(), 40);
+    assert_eq!(*s.get_or_insert(4, 400).0.value(), 40);
     assert_eq!(*s.get(&4).unwrap().value(), 40);
-    assert_eq!(*s.get_or_insert(6, 600).value(), 600);
+    assert_eq!(*s.get_or_insert(6, 600).0.value(), 600);
 }
 
 #[test]
@@ -530,12 +530,12 @@ fn get_or_insert_with() {
     s.insert(2, 2);
 
     assert_eq!(*s.get(&4).unwrap().value(), 4);
-    assert_eq!(*s.insert(4, 40).value(), 40);
+    assert_eq!(*s.insert(4, 40).0.value(), 40);
     assert_eq!(*s.get(&4).unwrap().value(), 40);
 
-    assert_eq!(*s.get_or_insert_with(4, || 400).value(), 40);
+    assert_eq!(*s.get_or_insert_with(4, || 400).0.value(), 40);
     assert_eq!(*s.get(&4).unwrap().value(), 40);
-    assert_eq!(*s.get_or_insert_with(6, || 600).value(), 600);
+    assert_eq!(*s.get_or_insert_with(6, || 600).0.value(), 600);
 }
 
 #[test]
@@ -548,7 +548,7 @@ fn get_or_insert_with_panic() {
     }));
     assert!(res.is_err());
     assert!(s.is_empty());
-    assert_eq!(*s.get_or_insert_with(4, || 40).value(), 40);
+    assert_eq!(*s.get_or_insert_with(4, || 40).0.value(), 40);
     assert_eq!(s.len(), 1);
 }
 
@@ -569,6 +569,7 @@ fn get_or_insert_with_parallel_run() {
                 std::thread::sleep(std::time::Duration::from_secs(4));
                 70
             })
+            .0
             .value(),
             700
         );
@@ -576,7 +577,7 @@ fn get_or_insert_with_parallel_run() {
     std::thread::sleep(std::time::Duration::from_secs(2));
 
     // main thread writes the value first
-    assert_eq!(*s.get_or_insert(7, 700).value(), 700);
+    assert_eq!(*s.get_or_insert(7, 700).0.value(), 700);
     handle.join().unwrap();
     assert!(*called.lock().unwrap());
 }

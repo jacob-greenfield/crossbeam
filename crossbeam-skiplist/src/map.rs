@@ -242,15 +242,16 @@ where
     ///
     /// let ages = SkipMap::new();
     /// let gates_age = ages.get_or_insert("Bill Gates", 64);
-    /// assert_eq!(*gates_age.value(), 64);
+    /// assert_eq!(*gates_age.0.value(), 64);
     ///
     /// ages.insert("Steve Jobs", 65);
     /// let jobs_age = ages.get_or_insert("Steve Jobs", -1);
-    /// assert_eq!(*jobs_age.value(), 65);
+    /// assert_eq!(*jobs_age.0.value(), 65);
     /// ```
-    pub fn get_or_insert(&self, key: K, value: V) -> Entry<'_, K, V> {
+    pub fn get_or_insert(&self, key: K, value: V) -> (Entry<'_, K, V>, bool) {
         let guard = &epoch::pin();
-        Entry::new(self.inner.get_or_insert(key, value, guard))
+        let (ref_entry, newly_inserted) = self.inner.get_or_insert(key, value, guard);
+        (Entry::new(ref_entry), newly_inserted)
     }
 
     /// Finds an entry with the specified key, or inserts a new `key`-`value` pair if none exist,
@@ -272,18 +273,19 @@ where
     ///
     /// let ages = SkipMap::new();
     /// let gates_age = ages.get_or_insert_with("Bill Gates", || 64);
-    /// assert_eq!(*gates_age.value(), 64);
+    /// assert_eq!(*gates_age.0.value(), 64);
     ///
     /// ages.insert("Steve Jobs", 65);
     /// let jobs_age = ages.get_or_insert_with("Steve Jobs", || -1);
-    /// assert_eq!(*jobs_age.value(), 65);
+    /// assert_eq!(*jobs_age.0.value(), 65);
     /// ```
-    pub fn get_or_insert_with<F>(&self, key: K, value_fn: F) -> Entry<'_, K, V>
+    pub fn get_or_insert_with<F>(&self, key: K, value_fn: F) -> (Entry<'_, K, V>, bool)
     where
         F: FnOnce() -> V,
     {
         let guard = &epoch::pin();
-        Entry::new(self.inner.get_or_insert_with(key, value_fn, guard))
+        let (ref_entry, newly_inserted) = self.inner.get_or_insert_with(key, value_fn, guard);
+        (Entry::new(ref_entry), newly_inserted)
     }
 
     /// Returns an iterator over all entries in the map,
@@ -369,9 +371,10 @@ where
     ///
     /// assert_eq!(*map.get("key").unwrap().value(), "value");
     /// ```
-    pub fn insert(&self, key: K, value: V) -> Entry<'_, K, V> {
+    pub fn insert(&self, key: K, value: V) -> (Entry<'_, K, V>, bool) {
         let guard = &epoch::pin();
-        Entry::new(self.inner.insert(key, value, guard))
+        let (ref_entry, newly_inserted) = self.inner.insert(key, value, guard);
+        (Entry::new(ref_entry), newly_inserted)
     }
 
     /// Inserts a `key`-`value` pair into the skip list and returns the new entry.
@@ -396,12 +399,13 @@ where
     /// map.compare_insert("absent_key", 0, |_| false);
     /// assert_eq!(*map.get("absent_key").unwrap().value(), 0);
     /// ```
-    pub fn compare_insert<F>(&self, key: K, value: V, compare_fn: F) -> Entry<'_, K, V>
+    pub fn compare_insert<F>(&self, key: K, value: V, compare_fn: F) -> (Entry<'_, K, V>, bool)
     where
         F: Fn(&V) -> bool,
     {
         let guard = &epoch::pin();
-        Entry::new(self.inner.compare_insert(key, value, compare_fn, guard))
+        let (ref_entry, newly_inserted) = self.inner.compare_insert(key, value, compare_fn, guard);
+        (Entry::new(ref_entry), newly_inserted)
     }
 
     /// Removes an entry with the specified `key` from the map and returns it.

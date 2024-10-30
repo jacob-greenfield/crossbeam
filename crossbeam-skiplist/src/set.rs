@@ -217,10 +217,11 @@ where
     ///
     /// let set = SkipSet::new();
     /// let entry = set.get_or_insert(2);
-    /// assert_eq!(*entry, 2);
+    /// assert_eq!(*entry.0, 2);
     /// ```
-    pub fn get_or_insert(&self, key: T) -> Entry<'_, T> {
-        Entry::new(self.inner.get_or_insert(key, ()))
+    pub fn get_or_insert(&self, key: T) -> (Entry<'_, T>, bool) {
+        let (ref_entry, newly_inserted) = self.inner.get_or_insert(key, ());
+        (Entry::new(ref_entry), newly_inserted)
     }
 
     /// Returns an iterator over all entries in the set.
@@ -294,8 +295,9 @@ where
     /// set.insert(2);
     /// assert_eq!(*set.get(&2).unwrap(), 2);
     /// ```
-    pub fn insert(&self, key: T) -> Entry<'_, T> {
-        Entry::new(self.inner.insert(key, ()))
+    pub fn insert(&self, key: T) -> (Entry<'_, T>, bool) {
+        let (ref_entry, newly_inserted) = self.inner.insert(key, ());
+        (Entry::new(ref_entry), newly_inserted)
     }
 
     /// Removes an entry with the specified key from the set and returns it.

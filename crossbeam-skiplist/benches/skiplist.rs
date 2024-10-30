@@ -31,7 +31,7 @@ fn iter(b: &mut Bencher) {
     let mut num = 0u64;
     for _ in 0..1_000 {
         num = num.wrapping_mul(17).wrapping_add(255);
-        map.insert(num, !num, guard).release(guard);
+        map.insert(num, !num, guard).0.release(guard);
     }
 
     b.iter(|| {
@@ -49,7 +49,7 @@ fn rev_iter(b: &mut Bencher) {
     let mut num = 0u64;
     for _ in 0..1_000 {
         num = num.wrapping_mul(17).wrapping_add(255);
-        map.insert(num, !num, guard).release(guard);
+        map.insert(num, !num, guard).0.release(guard);
     }
 
     b.iter(|| {
@@ -67,7 +67,7 @@ fn lookup(b: &mut Bencher) {
     let mut num = 0u64;
     for _ in 0..1_000 {
         num = num.wrapping_mul(17).wrapping_add(255);
-        map.insert(num, !num, guard).release(guard);
+        map.insert(num, !num, guard).0.release(guard);
     }
 
     b.iter(|| {
@@ -89,7 +89,7 @@ fn insert_remove(b: &mut Bencher) {
         let mut num = 0u64;
         for _ in 0..1_000 {
             num = num.wrapping_mul(17).wrapping_add(255);
-            map.insert(num, !num, guard).release(guard);
+            map.insert(num, !num, guard).0.release(guard);
         }
 
         let mut num = 0u64;

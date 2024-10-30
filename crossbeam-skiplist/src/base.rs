@@ -477,7 +477,7 @@ where
     }
 
     /// Finds an entry with the specified key, or inserts a new `key`-`value` pair if none exist.
-    pub fn get_or_insert(&self, key: K, value: V, guard: &Guard) -> RefEntry<'_, K, V> {
+    pub fn get_or_insert(&self, key: K, value: V, guard: &Guard) -> (RefEntry<'_, K, V>, bool) {
         self.insert_internal(key, || value, |_| false, guard)
     }
 
@@ -489,7 +489,7 @@ where
     /// discarded. If closure is modifying some other state (such as shared counters or shared
     /// objects), it may lead to <u>undesired behaviour</u> such as counters being changed without
     /// result of closure inserted
-    pub fn get_or_insert_with<F>(&self, key: K, value: F, guard: &Guard) -> RefEntry<'_, K, V>
+    pub fn get_or_insert_with<F>(&self, key: K, value: F, guard: &Guard) -> (RefEntry<'_, K, V>, bool)
     where
         F: FnOnce() -> V,
     {
@@ -827,6 +827,7 @@ where
 
                         // If `curr` contains a key that is greater than or equal to `key`, we're
                         // done with this level.
+                        #[allow(clippy::needless_borrow)]
                         match c.key.borrow().cmp(&key) {
                             cmp::Ordering::Greater => break,
                             cmp::Ordering::Equal => {
@@ -860,7 +861,7 @@ where
         value: F,
         replace: CompareF,
         guard: &Guard,
-    ) -> RefEntry<'_, K, V>
+    ) -> (RefEntry<'_, K, V>, bool)
     where
         F: FnOnce() -> V,
         CompareF: Fn(&V) -> bool,
@@ -882,7 +883,7 @@ where
                     // If a node with the key was found and we're not going to replace it, let's
                     // try returning it as an entry.
                     if let Some(e) = RefEntry::try_acquire(self, r) {
-                        return e;
+                        return (e, false);
                     }
                 }
             }
@@ -907,7 +908,7 @@ where
             // // Optimistically increment `len`.
             // self.hot_data.len.fetch_add(1, Ordering::Relaxed);
 
-            loop {
+            let did_insert = loop {
                 // Set the lowest successor of `n` to `search.right[0]`.
                 n.tower[0].store(search.right[0], Ordering::Relaxed);
 
@@ -925,12 +926,12 @@ where
                 {
                     // This node has been abandoned
                     if let Some(r) = search.found {
-                        // if r.mark_tower() {
-                        //     self.hot_data.len.fetch_sub(1, Ordering::Relaxed);
-                        // }
-                        r.mark_tower();
+                        if r.mark_tower() {
+                            // self.hot_data.len.fetch_sub(1, Ordering::Relaxed);
+                            break false;
+                        }
                     }
-                    break;
+                    break true;
                 }
 
                 // We failed. Let's search for the key and try again.
@@ -957,14 +958,14 @@ where
                             Node::finalize(node.as_raw());
                             // self.hot_data.len.fetch_sub(1, Ordering::Relaxed);
 
-                            return e;
+                            return (e, false);
                         }
 
                         // If we couldn't increment the reference count, that means someone has
                         // just now removed the node.
                     }
                 }
-            }
+            };
 
             // The new node was successfully installed. Let's create an entry associated with it.
             let entry = RefEntry {
@@ -1065,7 +1066,7 @@ where
             }
 
             // Finally, return the new entry.
-            entry
+            (entry, did_insert)
         }
     }
 }
@@ -1079,7 +1080,7 @@ where
     ///
     /// If there is an existing entry with this key, it will be removed before inserting the new
     /// one.
-    pub fn insert(&self, key: K, value: V, guard: &Guard) -> RefEntry<'_, K, V> {
+    pub fn insert(&self, key: K, value: V, guard: &Guard) -> (RefEntry<'_, K, V>, bool) {
         self.insert_internal(key, || value, |_| true, guard)
     }
 
@@ -1094,7 +1095,7 @@ where
         value: V,
         compare_fn: F,
         guard: &Guard,
-    ) -> RefEntry<'_, K, V>
+    ) -> (RefEntry<'_, K, V>, bool)
     where
         F: Fn(&V) -> bool,
     {

@@ -35,10 +35,10 @@ fn is_empty() {
     let s = SkipList::new(epoch::default_collector().clone());
     assert!(s.is_empty());
 
-    s.insert(1, 10, guard).release(guard);
+    s.insert(1, 10, guard).0.release(guard);
     assert!(!s.is_empty());
-    s.insert(2, 20, guard).release(guard);
-    s.insert(3, 30, guard).release(guard);
+    s.insert(2, 20, guard).0.release(guard);
+    s.insert(3, 30, guard).0.release(guard);
     assert!(!s.is_empty());
 
     s.remove(&2, guard).unwrap().release(guard);
@@ -59,7 +59,7 @@ fn insert() {
     let s = SkipList::new(epoch::default_collector().clone());
 
     for &x in &insert {
-        s.insert(x, x * 10, guard).release(guard);
+        s.insert(x, x * 10, guard).0.release(guard);
         assert_eq!(*s.get(&x, guard).unwrap().value(), x * 10);
     }
 
@@ -79,7 +79,7 @@ fn remove() {
     let s = SkipList::new(epoch::default_collector().clone());
 
     for &x in &insert {
-        s.insert(x, x * 10, guard).release(guard);
+        s.insert(x, x * 10, guard).0.release(guard);
     }
     for x in &not_present {
         assert!(s.remove(x, guard).is_none());
@@ -113,7 +113,7 @@ fn entry() {
     assert!(s.back(guard).is_none());
 
     for &x in &[4, 2, 12, 8, 7, 11, 5] {
-        s.insert(x, x * 10, guard).release(guard);
+        s.insert(x, x * 10, guard).0.release(guard);
     }
 
     let mut e = s.front(guard).unwrap();
@@ -135,7 +135,7 @@ fn entry_remove() {
     let s = SkipList::new(epoch::default_collector().clone());
 
     for &x in &[4, 2, 12, 8, 7, 11, 5] {
-        s.insert(x, x * 10, guard).release(guard);
+        s.insert(x, x * 10, guard).0.release(guard);
     }
 
     let mut e = s.get(&7, guard).unwrap();
@@ -162,7 +162,7 @@ fn entry_reposition() {
     let s = SkipList::new(epoch::default_collector().clone());
 
     for &x in &[4, 2, 12, 8, 7, 11, 5] {
-        s.insert(x, x * 10, guard).release(guard);
+        s.insert(x, x * 10, guard).0.release(guard);
     }
 
     let mut e = s.get(&7, guard).unwrap();
@@ -170,7 +170,7 @@ fn entry_reposition() {
     assert!(e.remove());
     assert!(e.is_removed());
 
-    s.insert(7, 700, guard).release(guard);
+    s.insert(7, 700, guard).0.release(guard);
     e.move_prev();
     e.move_next();
     assert_eq!(*e.key(), 7);
@@ -183,13 +183,13 @@ fn len() {
     assert_eq!(s.len(), 0);
 
     for (i, &x) in [4, 2, 12, 8, 7, 11, 5].iter().enumerate() {
-        s.insert(x, x * 10, guard).release(guard);
+        s.insert(x, x * 10, guard).0.release(guard);
         assert_eq!(s.len(), i + 1);
     }
 
-    s.insert(5, 0, guard).release(guard);
+    s.insert(5, 0, guard).0.release(guard);
     assert_eq!(s.len(), 7);
-    s.insert(5, 0, guard).release(guard);
+    s.insert(5, 0, guard).0.release(guard);
     assert_eq!(s.len(), 7);
 
     assert!(s.remove(&6, guard).is_none());
@@ -206,11 +206,11 @@ fn insert_and_remove() {
     let s = SkipList::new(epoch::default_collector().clone());
     let keys = || s.iter(guard).map(|e| *e.key()).collect::<Vec<_>>();
 
-    s.insert(3, 0, guard).release(guard);
-    s.insert(5, 0, guard).release(guard);
-    s.insert(1, 0, guard).release(guard);
-    s.insert(4, 0, guard).release(guard);
-    s.insert(2, 0, guard).release(guard);
+    s.insert(3, 0, guard).0.release(guard);
+    s.insert(5, 0, guard).0.release(guard);
+    s.insert(1, 0, guard).0.release(guard);
+    s.insert(4, 0, guard).0.release(guard);
+    s.insert(2, 0, guard).0.release(guard);
     assert_eq!(keys(), [1, 2, 3, 4, 5]);
 
     s.remove(&4, guard).unwrap().release(guard);
@@ -230,13 +230,13 @@ fn insert_and_remove() {
     s.remove(&5, guard).unwrap().release(guard);
     assert_eq!(keys(), []);
 
-    s.insert(3, 0, guard).release(guard);
+    s.insert(3, 0, guard).0.release(guard);
     assert_eq!(keys(), [3]);
-    s.insert(1, 0, guard).release(guard);
+    s.insert(1, 0, guard).0.release(guard);
     assert_eq!(keys(), [1, 3]);
-    s.insert(3, 0, guard).release(guard);
+    s.insert(3, 0, guard).0.release(guard);
     assert_eq!(keys(), [1, 3]);
-    s.insert(5, 0, guard).release(guard);
+    s.insert(5, 0, guard).0.release(guard);
     assert_eq!(keys(), [1, 3, 5]);
 
     s.remove(&3, guard).unwrap().release(guard);
@@ -253,11 +253,11 @@ fn insert_and_remove() {
 fn get() {
     let guard = &epoch::pin();
     let s = SkipList::new(epoch::default_collector().clone());
-    s.insert(30, 3, guard).release(guard);
-    s.insert(50, 5, guard).release(guard);
-    s.insert(10, 1, guard).release(guard);
-    s.insert(40, 4, guard).release(guard);
-    s.insert(20, 2, guard).release(guard);
+    s.insert(30, 3, guard).0.release(guard);
+    s.insert(50, 5, guard).0.release(guard);
+    s.insert(10, 1, guard).0.release(guard);
+    s.insert(40, 4, guard).0.release(guard);
+    s.insert(20, 2, guard).0.release(guard);
 
     assert_eq!(*s.get(&10, guard).unwrap().value(), 1);
     assert_eq!(*s.get(&20, guard).unwrap().value(), 2);
@@ -275,11 +275,11 @@ fn get() {
 fn lower_bound() {
     let guard = &epoch::pin();
     let s = SkipList::new(epoch::default_collector().clone());
-    s.insert(30, 3, guard).release(guard);
-    s.insert(50, 5, guard).release(guard);
-    s.insert(10, 1, guard).release(guard);
-    s.insert(40, 4, guard).release(guard);
-    s.insert(20, 2, guard).release(guard);
+    s.insert(30, 3, guard).0.release(guard);
+    s.insert(50, 5, guard).0.release(guard);
+    s.insert(10, 1, guard).0.release(guard);
+    s.insert(40, 4, guard).0.release(guard);
+    s.insert(20, 2, guard).0.release(guard);
 
     assert_eq!(*s.lower_bound(Bound::Unbounded, guard).unwrap().value(), 1);
 
@@ -355,11 +355,11 @@ fn lower_bound() {
 fn upper_bound() {
     let guard = &epoch::pin();
     let s = SkipList::new(epoch::default_collector().clone());
-    s.insert(30, 3, guard).release(guard);
-    s.insert(50, 5, guard).release(guard);
-    s.insert(10, 1, guard).release(guard);
-    s.insert(40, 4, guard).release(guard);
-    s.insert(20, 2, guard).release(guard);
+    s.insert(30, 3, guard).0.release(guard);
+    s.insert(50, 5, guard).0.release(guard);
+    s.insert(10, 1, guard).0.release(guard);
+    s.insert(40, 4, guard).0.release(guard);
+    s.insert(20, 2, guard).0.release(guard);
 
     assert_eq!(*s.upper_bound(Bound::Unbounded, guard).unwrap().value(), 5);
 
@@ -435,38 +435,38 @@ fn upper_bound() {
 fn get_or_insert() {
     let guard = &epoch::pin();
     let s = SkipList::new(epoch::default_collector().clone());
-    s.insert(3, 3, guard).release(guard);
-    s.insert(5, 5, guard).release(guard);
-    s.insert(1, 1, guard).release(guard);
-    s.insert(4, 4, guard).release(guard);
-    s.insert(2, 2, guard).release(guard);
+    s.insert(3, 3, guard).0.release(guard);
+    s.insert(5, 5, guard).0.release(guard);
+    s.insert(1, 1, guard).0.release(guard);
+    s.insert(4, 4, guard).0.release(guard);
+    s.insert(2, 2, guard).0.release(guard);
 
     assert_eq!(*s.get(&4, guard).unwrap().value(), 4);
-    assert_eq!(*ref_entry(s.insert(4, 40, guard)).value(), 40);
+    assert_eq!(*ref_entry(s.insert(4, 40, guard).0).value(), 40);
     assert_eq!(*s.get(&4, guard).unwrap().value(), 40);
 
-    assert_eq!(*s.get_or_insert(4, 400, guard).value(), 40);
+    assert_eq!(*s.get_or_insert(4, 400, guard).0.value(), 40);
     assert_eq!(*s.get(&4, guard).unwrap().value(), 40);
-    assert_eq!(*s.get_or_insert(6, 600, guard).value(), 600);
+    assert_eq!(*s.get_or_insert(6, 600, guard).0.value(), 600);
 }
 
 #[test]
 fn get_or_insert_with() {
     let guard = &epoch::pin();
     let s = SkipList::new(epoch::default_collector().clone());
-    s.insert(3, 3, guard).release(guard);
-    s.insert(5, 5, guard).release(guard);
-    s.insert(1, 1, guard).release(guard);
-    s.insert(4, 4, guard).release(guard);
-    s.insert(2, 2, guard).release(guard);
+    s.insert(3, 3, guard).0.release(guard);
+    s.insert(5, 5, guard).0.release(guard);
+    s.insert(1, 1, guard).0.release(guard);
+    s.insert(4, 4, guard).0.release(guard);
+    s.insert(2, 2, guard).0.release(guard);
 
     assert_eq!(*s.get(&4, guard).unwrap().value(), 4);
-    assert_eq!(*ref_entry(s.insert(4, 40, guard)).value(), 40);
+    assert_eq!(*ref_entry(s.insert(4, 40, guard).0).value(), 40);
     assert_eq!(*s.get(&4, guard).unwrap().value(), 40);
 
-    assert_eq!(*s.get_or_insert_with(4, || 400, guard).value(), 40);
+    assert_eq!(*s.get_or_insert_with(4, || 400, guard).0.value(), 40);
     assert_eq!(*s.get(&4, guard).unwrap().value(), 40);
-    assert_eq!(*s.get_or_insert_with(6, || 600, guard).value(), 600);
+    assert_eq!(*s.get_or_insert_with(6, || 600, guard).0.value(), 600);
 }
 
 #[test]
@@ -481,7 +481,7 @@ fn get_or_insert_with_panic() {
     assert!(res.is_err());
     assert!(s.is_empty());
     let guard = &epoch::pin();
-    assert_eq!(*s.get_or_insert_with(4, || 40, guard).value(), 40);
+    assert_eq!(*s.get_or_insert_with(4, || 40, guard).0.value(), 40);
     assert_eq!(s.len(), 1);
 }
 
@@ -507,6 +507,7 @@ fn get_or_insert_with_parallel_run() {
                 },
                 guard,
             )
+            .0
             .value(),
             700
         );
@@ -515,7 +516,7 @@ fn get_or_insert_with_parallel_run() {
     let guard = &epoch::pin();
 
     // main thread writes the value first
-    assert_eq!(*s.get_or_insert(7, 700, guard).value(), 700);
+    assert_eq!(*s.get_or_insert(7, 700, guard).0.value(), 700);
     handle.join().unwrap();
     assert!(*called.lock().unwrap());
 }
@@ -524,11 +525,11 @@ fn get_or_insert_with_parallel_run() {
 fn get_next_prev() {
     let guard = &epoch::pin();
     let s = SkipList::new(epoch::default_collector().clone());
-    s.insert(3, 3, guard).release(guard);
-    s.insert(5, 5, guard).release(guard);
-    s.insert(1, 1, guard).release(guard);
-    s.insert(4, 4, guard).release(guard);
-    s.insert(2, 2, guard).release(guard);
+    s.insert(3, 3, guard).0.release(guard);
+    s.insert(5, 5, guard).0.release(guard);
+    s.insert(1, 1, guard).0.release(guard);
+    s.insert(4, 4, guard).0.release(guard);
+    s.insert(2, 2, guard).0.release(guard);
 
     let mut e = s.get(&3, guard).unwrap();
     assert_eq!(*e.next().unwrap().value(), 4);
@@ -574,7 +575,7 @@ fn iter() {
     let guard = &epoch::pin();
     let s = SkipList::new(epoch::default_collector().clone());
     for &x in &[4, 2, 12, 8, 7, 11, 5] {
-        s.insert(x, x * 10, guard).release(guard);
+        s.insert(x, x * 10, guard).0.release(guard);
     }
 
     assert_eq!(
@@ -601,7 +602,7 @@ fn iter_range() {
     let s = SkipList::new(epoch::default_collector().clone());
     let v = (0..10).map(|x| x * 10).collect::<Vec<_>>();
     for &x in v.iter() {
-        s.insert(x, x, guard).release(guard);
+        s.insert(x, x, guard).0.release(guard);
     }
 
     assert_eq!(
@@ -821,7 +822,7 @@ fn into_iter() {
     let guard = &epoch::pin();
     let s = SkipList::new(epoch::default_collector().clone());
     for &x in &[4, 2, 12, 8, 7, 11, 5] {
-        s.insert(x, x * 10, guard).release(guard);
+        s.insert(x, x * 10, guard).0.release(guard);
     }
 
     assert_eq!(
@@ -843,7 +844,7 @@ fn clear() {
     let guard = &mut epoch::pin();
     let s = SkipList::new(epoch::default_collector().clone());
     for &x in &[4, 2, 12, 8, 7, 11, 5] {
-        s.insert(x, x * 10, guard).release(guard);
+        s.insert(x, x * 10, guard).0.release(guard);
     }
 
     assert!(!s.is_empty());
@@ -882,7 +883,7 @@ fn drops() {
 
         let s = SkipList::new(collector.clone());
         for &x in &[4, 2, 12, 8, 7, 11, 5] {
-            s.insert(Key(x), Value, guard).release(guard);
+            s.insert(Key(x), Value, guard).0.release(guard);
         }
         assert_eq!(KEYS.load(Ordering::SeqCst), 0);
         assert_eq!(VALUES.load(Ordering::SeqCst), 0);
