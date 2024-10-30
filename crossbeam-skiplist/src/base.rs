@@ -298,8 +298,8 @@ struct Position<'a, K, V> {
 
 /// Frequently modified data associated with a skip list.
 struct HotData {
-    // /// The seed for random height generation.
-    // seed: AtomicUsize,
+    /// The seed for random height generation.
+    seed: AtomicUsize,
 
     // /// The number of entries in the skip list.
     // len: AtomicUsize,
@@ -343,7 +343,7 @@ impl<K, V> SkipList<K, V> {
             head: Head::new(),
             collector,
             hot_data: CachePadded::new(HotData {
-                // seed: AtomicUsize::new(1),
+                seed: AtomicUsize::new(1),
                 // len: AtomicUsize::new(0),
                 max_height: AtomicUsize::new(1),
             }),
@@ -561,12 +561,12 @@ where
         //
         // This particular set of operations generates 32-bit integers. See:
         // https://en.wikipedia.org/wiki/Xorshift#Example_implementation
-        // let mut num = self.hot_data.seed.load(Ordering::Relaxed);
-        // num ^= num << 13;
-        // num ^= num >> 17;
-        // num ^= num << 5;
-        // self.hot_data.seed.store(num, Ordering::Relaxed);
-        let num = rand::random::<u32>();
+        let mut num = self.hot_data.seed.load(Ordering::Relaxed);
+        num ^= num << 13;
+        num ^= num >> 17;
+        num ^= num << 5;
+        self.hot_data.seed.store(num, Ordering::Relaxed);
+        // let num = rand::random::<u32>();
 
         let mut height = cmp::min(MAX_HEIGHT, num.trailing_zeros() as usize + 1);
         unsafe {
