@@ -303,7 +303,6 @@ struct HotData {
 
     // /// The number of entries in the skip list.
     // len: AtomicUsize,
-
     /// Highest tower currently in use. This value is used as a hint for where
     /// to start lookups and never decreases.
     max_height: AtomicUsize,
@@ -489,7 +488,12 @@ where
     /// discarded. If closure is modifying some other state (such as shared counters or shared
     /// objects), it may lead to <u>undesired behaviour</u> such as counters being changed without
     /// result of closure inserted
-    pub fn get_or_insert_with<F>(&self, key: K, value: F, guard: &Guard) -> (RefEntry<'_, K, V>, bool)
+    pub fn get_or_insert_with<F>(
+        &self,
+        key: K,
+        value: F,
+        guard: &Guard,
+    ) -> (RefEntry<'_, K, V>, bool)
     where
         F: FnOnce() -> V,
     {
@@ -556,7 +560,7 @@ where
     }
 
     /// Generates a random height and returns it.
-    fn random_height(&self) -> usize {
+    fn random_height(&self, key: &K) -> usize {
         // Pseudorandom number generation from "Xorshift RNGs" by George Marsaglia.
         //
         // This particular set of operations generates 32-bit integers. See:
@@ -566,23 +570,28 @@ where
         // num ^= num >> 17;
         // num ^= num << 5;
         // self.hot_data.seed.store(num, Ordering::Relaxed);
-        let num = rand::random::<u32>();
+        // let num = rand::random::<u32>();
 
-        let mut height = cmp::min(MAX_HEIGHT, num.trailing_zeros() as usize + 1);
+        // let mut height = cmp::min(MAX_HEIGHT, num.trailing_zeros() as usize + 1);
+        // unsafe {
+        //     // Keep decreasing the height while it's much larger than all towers currently in the
+        //     // skip list.
+        //     //
+        //     // Note that we're loading the pointer only to check whether it is null, so it's okay
+        //     // to use `epoch::unprotected()` in this situation.
+        //     while height >= 4
+        //         && self.head[height - 2]
+        //             .load(Ordering::Relaxed, epoch::unprotected())
+        //             .is_null()
+        //     {
+        //         height -= 1;
+        //     }
+        // }
+        let mut key_bytes = [0u8; 4];
         unsafe {
-            // Keep decreasing the height while it's much larger than all towers currently in the
-            // skip list.
-            //
-            // Note that we're loading the pointer only to check whether it is null, so it's okay
-            // to use `epoch::unprotected()` in this situation.
-            while height >= 4
-                && self.head[height - 2]
-                    .load(Ordering::Relaxed, epoch::unprotected())
-                    .is_null()
-            {
-                height -= 1;
-            }
-        }
+            std::ptr::copy_nonoverlapping(key as *const _ as *const u8, key_bytes.as_mut_ptr(), 4);
+        };
+        let height = i32::from_ne_bytes(key_bytes).trailing_zeros() as usize;
 
         // Track the max height to speed up lookups
         let mut max_height = self.hot_data.max_height.load(Ordering::Relaxed);
@@ -891,7 +900,7 @@ where
             // create value before creating node, so extra allocation doesn't happen if value() function panics
             let value = value();
             // Create a new node.
-            let height = self.random_height();
+            let height = self.random_height(&key);
             let (node, n) = {
                 // The reference count is initially two to account for:
                 // 1. The entry that will be returned.
