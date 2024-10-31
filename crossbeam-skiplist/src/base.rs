@@ -591,7 +591,7 @@ where
         unsafe {
             std::ptr::copy_nonoverlapping(key as *const _ as *const u8, key_bytes.as_mut_ptr(), 4);
         };
-        let height = i32::from_ne_bytes(key_bytes).trailing_zeros() as usize;
+        let height = i32::from_ne_bytes(key_bytes).trailing_zeros() as usize + 1;
 
         // Track the max height to speed up lookups
         let mut max_height = self.hot_data.max_height.load(Ordering::Relaxed);
