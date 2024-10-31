@@ -55,7 +55,7 @@ impl<K, V> Head<K, V> {
     fn new() -> Self {
         // Initializing arrays in rust is a pain...
         Self {
-            pointers: Default::default(),
+            pointers: std::array::from_fn(|_i| Default::default()),
         }
     }
 }
