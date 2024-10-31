@@ -14,7 +14,7 @@ use crossbeam_epoch::{self as epoch, Atomic, Collector, Guard, Shared};
 use crossbeam_utils::CachePadded;
 
 /// Number of bits needed to store height.
-const HEIGHT_BITS: usize = 5;
+const HEIGHT_BITS: usize = 6;
 
 /// Maximum height of a skip list tower.
 const MAX_HEIGHT: usize = 1 << HEIGHT_BITS;
